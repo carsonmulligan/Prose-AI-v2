@@ -6,8 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Save, ArrowLeft, Loader2, Download } from 'lucide-react'
-import { updateChapter, generateChapterContent, exportChapterAsMarkdown } from "@/app/actions"
+import { updateChapter, generateChapterContent, exportChapterAsMarkdown, exportAllChaptersAsPDF } from "@/app/actions"
 import Link from 'next/link'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface Chapter {
   title: string
@@ -63,6 +69,23 @@ export function ChapterEditor({ chapterNumber, initialChapter }: ChapterEditorPr
     }
   }
 
+  const handleExportPDF = async () => {
+    try {
+      const pdfBuffer = await exportAllChaptersAsPDF()
+      const blob = new Blob([pdfBuffer], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `story.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Error exporting PDF:", error)
+    }
+  }
+
   return (
     <Card className="mb-4">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -85,9 +108,21 @@ export function ChapterEditor({ chapterNumber, initialChapter }: ChapterEditorPr
           <Button variant="ghost" size="sm" onClick={handleSave} disabled={isLoading}>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleExportMarkdown}>
-            <Download className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <Download className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={handleExportMarkdown}>
+                Export as Markdown
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF}>
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

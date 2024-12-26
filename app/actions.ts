@@ -3,6 +3,8 @@
 import fs from 'fs/promises'
 import path from 'path'
 import JSZip from 'jszip'
+import { renderToBuffer } from '@react-pdf/renderer'
+import { createStoryPDF } from '@/components/pdf/story-pdf'
 
 interface Chapter {
   title: string
@@ -186,5 +188,20 @@ export async function exportAllChaptersAsZip(): Promise<Uint8Array> {
 
   const zipContent = await zip.generateAsync({ type: "uint8array" });
   return zipContent;
+}
+
+export async function exportAllChaptersAsPDF(): Promise<Buffer> {
+  const story = await getStory();
+  if (!story) {
+    throw new Error("Story not found");
+  }
+
+  try {
+    const buffer = await renderToBuffer(createStoryPDF(story));
+    return buffer;
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    throw error;
+  }
 }
 
